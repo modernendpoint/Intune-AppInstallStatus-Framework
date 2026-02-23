@@ -1,27 +1,29 @@
 function Invoke-IAISReport {
-  <#
-    NOTE:
-    This is a scaffold. The report route name may vary by tenant.
-    Finalize the endpoint here once, and the rest of the framework becomes stable.
-
-    Common pattern:
-      POST https://graph.microsoft.com/beta/deviceManagement/reports/<reportName>
-      Body: { filter, select, top, skip, orderBy }
-  #>
   [CmdletBinding()]
   param(
-    [Parameter(Mandatory)][ValidateSet('DeviceAppInstallStatus','UserAppInstallStatus','AppInstallSummary')]
+    [Parameter(Mandatory)][ValidateSet('DeviceInstallStatus','UserInstallStatus')]
     [string]$ReportName,
     [Parameter(Mandatory)][string]$AppId,
-    [int]$Top = 500
+    [int]$TimeoutSeconds = 180
   )
 
-  $uri = "https://graph.microsoft.com/beta/deviceManagement/reports/$ReportName"
+  # NOTE:
+  # We use exportJobs which is the stable Intune reporting pattern.
+  # The output is a CSV downloadUrl which we fetch and return as objects.
 
-  $body = @{
-    top    = $Top
-    filter = "AppId eq '$AppId'"
+  $jobBody = @{
+    reportName = $ReportName
+    filter     = "AppId eq '$AppId'"
+    format     = "csv"
   }
 
-  Invoke-IAISGraph -Method POST -Uri $uri -Body $body
-}
+  $job = Invoke-IAISGraph -Method POST -Uri "https://graph.microsoft.com/beta/deviceManagement/reports/exportJobs" -Body $jobBody
+
+  $jobId = $job.id
+  if (-not $jobId) { throw "Failed to create export job." }
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+
+  do {
+    Start-Sleep -Seconds 3
+    $status = Invoke-IAISGraph -Method GET -Uri "https://graph.microsoft.com/beta/deviceManagement/re
