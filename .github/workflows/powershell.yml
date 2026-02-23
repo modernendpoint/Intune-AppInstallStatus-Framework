@@ -1,0 +1,21 @@
+name: PowerShell Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install PSScriptAnalyzer
+      run: |
+        pwsh -Command "Install-Module PSScriptAnalyzer -Force -Scope CurrentUser"
+
+    - name: Run Script Analyzer
+      run: |
+        pwsh -Command "Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error"
