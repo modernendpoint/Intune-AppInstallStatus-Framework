@@ -26,4 +26,16 @@ function Invoke-IAISReport {
 
   do {
     Start-Sleep -Seconds 3
-    $status = Invoke-IAISGraph -Method GET -Uri "https://graph.microsoft.com/beta/deviceManagement/re
+    $status = Invoke-IAISGraph -Method GET -Uri "https://graph.microsoft.com/beta/deviceManagement/reports/exportJobs/$jobId"
+    if ($status.status -eq "completed" -and $status.url) { break }
+    if ($status.status -eq "failed") { throw "Export job failed: $($status.error | ConvertTo-Json -Depth 5)" }
+  } while ((Get-Date) -lt $deadline)
+
+  if (-not $status.url) { throw "Export job did not complete within timeout." }
+
+  # Download CSV
+  $csvText = (Invoke-WebRequest -Uri $status.url -UseBasicParsing).Content
+
+  # Convert CSV to objects
+  $csvText | ConvertFrom-Csv
+}
