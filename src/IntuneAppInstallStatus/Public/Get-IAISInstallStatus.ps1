@@ -2,30 +2,30 @@ function Get-IAISInstallStatus {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)][string]$AppId,
-    [ValidateSet('ByDevice','ByUser','Summary')][string]$View = 'ByDevice',
-    [int]$Top = 500
+    [ValidateSet('ByDevice','ByUser')][string]$View = 'ByDevice'
   )
 
-  $report = switch ($View) {
-    'ByDevice' { 'DeviceAppInstallStatus' }
-    'ByUser'   { 'UserAppInstallStatus' }
-    'Summary'  { 'AppInstallSummary' }
-  }
+  $report = if ($View -eq 'ByDevice') { 'DeviceInstallStatus' } else { 'UserInstallStatus' }
 
-  $raw = Invoke-IAISReport -ReportName $report -AppId $AppId -Top $Top
+  $rows = Invoke-IAISReport -ReportName $report -AppId $AppId
 
-  $values = @()
-  if ($raw.PSObject.Properties.Name -contains 'values') { $values = $raw.values }
+  foreach ($r in $rows) {
 
-  foreach ($v in $values) {
+    $deviceName = $r.DeviceName  ?? $r.'Device Name' ?? $r.ManagedDeviceName
+    $deviceId   = $r.DeviceId    ?? $r.'Device Id'   ?? $r.ManagedDeviceId
+    $upn        = $r.UserPrincipalName ?? $r.UPN ?? $r.User ?? $r.'User Principal Name'
+    $status     = $r.InstallState ?? $r.InstallStatus ?? $r.Status ?? $r.'Install State'
+    $error      = $r.ErrorCode ?? $r.Error ?? $r.'Error Code'
+    $updated    = $r.LastModifiedDateTime ?? $r.LastUpdated ?? $r.'Last Modified Date Time'
+
     [pscustomobject]@{
       AppId       = $AppId
-      DeviceName  = $v.deviceName
-      DeviceId    = $v.deviceId
-      UPN         = $v.userPrincipalName
-      Status      = $v.installState
-      ErrorCode   = $v.errorCode
-      LastUpdated = $v.lastModifiedDateTime
+      DeviceName  = $deviceName
+      DeviceId    = $deviceId
+      UPN         = $upn
+      Status      = $status
+      ErrorCode   = $error
+      LastUpdated = $updated
     }
   }
 }
