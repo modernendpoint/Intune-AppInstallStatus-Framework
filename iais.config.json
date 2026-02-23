@@ -1,0 +1,15 @@
+{
+  "TenantId": "",
+  "Cloud": "Public",
+  "UseBeta": true,
+  "LogLevel": "Info",
+  "ExportPath": "runs/exports",
+  "LogPath": "runs/logs",
+  "SnapshotPath": "runs/snapshots",
+  "DefaultTop": 500,
+  "Throttle": {
+    "MaxRetries": 6,
+    "BaseDelaySeconds": 2,
+    "MaxDelaySeconds": 30
+  }
+}
