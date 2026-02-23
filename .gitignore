@@ -1,0 +1,17 @@
+# PowerShell / module build artifacts
+*.zip
+*.nupkg
+*.log
+*.tmp
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Runs
+runs/
+!runs/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
